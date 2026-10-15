@@ -71,7 +71,7 @@ cmake --build build/windows --parallel 2
 
 출력은 `build/windows/bin/SpaceCadetPinball.exe`입니다. CMake는 SDL DLL 두 개와 `assets/`를 실행 파일 옆으로 복사합니다. 실행할 때는 이 디렉터리 구성을 함께 유지합니다.
 
-PC의 하단 화면 버튼은 표시하지 않습니다. 기본 키는 `Z` 왼쪽 플리퍼, `?` 오른쪽 플리퍼, `Space` 발사, `F2` 새 게임, `F3` 일시정지입니다. `옵션 → 그래픽 → 표시 모드`에서 고화질을 선택하면 모니터 작업 영역에 맞게 창이 커집니다. 모드 전환 뒤에는 직접 게임을 재개합니다.
+PC의 하단 화면 버튼은 표시하지 않습니다. 기본 키는 `Z` 왼쪽 플리퍼, `?` 오른쪽 플리퍼, `Space` 발사, `F2` 새 게임, `F3` 일시정지입니다. `옵션 → 화면 → 표시 모드`에서 고화질을 선택하면 모니터 작업 영역에 맞게 창이 커집니다. 모드 전환 뒤에는 직접 게임을 재개합니다.
 
 ```powershell
 & ./build/windows/bin/SpaceCadetPinball.exe
