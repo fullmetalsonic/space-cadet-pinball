@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "version": "d45f04c0e543ab556b2bcf43b425835d37a306326312720c0f3e922ea6e17204",
+  "sourceVersion": "sensor-removal-bf6986ccc72d4a7459d3c79fc75f4f78a5807fdb9d5e7613fd17661fb99016d3-capture-release-d035eafb82f0d62f9fe12963436ab4166995cdac6097f8d16a168d6d4800d10b",
+  "assets": [
+    {
+      "url": "bootstrap.mjs",
+      "size": 9672,
+      "sha256": "d035eafb82f0d62f9fe12963436ab4166995cdac6097f8d16a168d6d4800d10b"
+    },
+    {
+      "url": "icon-192.png",
+      "size": 1191,
+      "sha256": "06c5ed83d3f1bfb63ed3f9139210d85252ef3be79cf8f413c50d4c5a8fb3e98f"
+    },
+    {
+      "url": "icon-512.png",
+      "size": 5042,
+      "sha256": "02e9ea3387c74aae5913aa92b241fcf3e3ed95d7fa5ecdcc626bc00a93bee29c"
+    },
+    {
+      "url": "icon.svg",
+      "size": 387,
+      "sha256": "814c8567da8ea776b86be2eea5571d2b296149c1b784dc0dec7b99ecbf4d9160"
+    },
+    {
+      "url": "index.html",
+      "size": 2186,
+      "sha256": "ff8993915eccc2c80e10cb325da2d6760bd7349e4129ee21aa87e3b42565e907"
+    },
+    {
+      "url": "layout.mjs",
+      "size": 1424,
+      "sha256": "d55e8f2ae214b936ec610d192b42dfcd886f941c06536bc9352becc63e77df4b"
+    },
+    {
+      "url": "locale.mjs",
+      "size": 4537,
+      "sha256": "f0461afaa3e0402813b0030f45620b4e6429116038352deb5048fe3c2a167785"
+    },
+    {
+      "url": "manifest.webmanifest",
+      "size": 440,
+      "sha256": "4e2036434bd4a50b0e2aecd62b2b46bd42c706f942ef809ec87713333f215cf4"
+    },
+    {
+      "url": "name-input.mjs",
+      "size": 4422,
+      "sha256": "0c67e697f7fbbf76a94c88f99957841bf019429c66802111a4a92f64b8c1b082"
+    },
+    {
+      "url": "persistence.mjs",
+      "size": 1159,
+      "sha256": "527ecebda7876e5ddeee30c93b6be47d30eb9ac6e80f4168c282bf63cad4d596"
+    },
+    {
+      "url": "shell.css",
+      "size": 2380,
+      "sha256": "50d6b30532415ec2bb711ed5930352eecafbaa097b3367fd74b16a87f70a5b0e"
+    },
+    {
+      "url": "SpaceCadetPinball.data",
+      "size": 11048248,
+      "sha256": "d4257ff157d19a802f845a01567f84aa44fe24d128dabe748adb26e44f7255c4"
+    },
+    {
+      "url": "SpaceCadetPinball.js",
+      "size": 197660,
+      "sha256": "81a68d7abc189205b16e9292b855cd19a90bd73b15e011ec2bf464649bd09f04"
+    },
+    {
+      "url": "SpaceCadetPinball.wasm",
+      "size": 1877889,
+      "sha256": "847306b829ccf50e4b24a084c2ff32e9099ab0a1004a14e714d96342fdd94ed0"
+    },
+    {
+      "url": "sw-runtime.js",
+      "size": 4725,
+      "sha256": "6a719d3b4574dff3b9f0bb4679b245cb8c75d9fb3485df3f5457f1e4a98f64b2"
+    }
+  ]
+}
