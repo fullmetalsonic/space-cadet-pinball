@@ -9,9 +9,17 @@ Windows XP의 **3D 핀볼: Space Cadet**을 현대 Windows, 브라우저, Androi
 - 폰 기울기 센서와 관련 옵션은 제거했습니다. **화면 좌·우·앞 흔들기 버튼**과 원래 게임의 Tilt 반칙은 유지합니다.
 - 최고 점수·이름·설정은 각 기기 또는 브라우저에 저장합니다. 공용 인터넷 순위표와 계정 동기화는 포함하지 않습니다.
 
-## 게임 자료는 별도로 필요합니다
+## 다운로드 — 비공개 Release
 
-이 저장소는 **소스 공개**입니다. XP 원본 실행 파일, `PINBALL.DAT`, 효과음·MIDI·테이블 이미지와 이 자료를 포함한 실행 패키지는 제공하지 않습니다. 원본 게임 자료의 공개 재배포 권리는 확인되지 않았습니다. 직접 사용할 권한이 있는 자료를 로컬 `assets/game/`에 준비해야 게임이 실행됩니다.
+[Windows · Web · Android 다운로드](https://github.com/fullmetalsonic/space-cadet-pinball/releases/tag/v0.1.0-preview.1)에서 파일을 받으세요. 저장소 접근 권한이 있는 GitHub 계정으로 로그인해야 합니다.
+
+- **Windows:** `windows-x64.zip` 전체 압축 해제 후 `SpaceCadetPinball.exe` 실행. DLL과 `assets/`를 함께 유지합니다.
+- **Android:** arm64 APK를 사용합니다. Android 8.0 이상이 필요합니다.
+- **웹:** `web.zip`은 브라우저용 빌드 파일입니다. 압축을 푼 폴더에서 정적 HTTP 서버를 실행해야 하며, 공개 플레이 사이트는 아직 배포하지 않았습니다. ZIP의 `README-START.txt`에 실행 방법이 있습니다.
+
+## 소스에서 빌드할 때
+
+소스 Git 이력에는 XP 원본 실행 파일과 `assets/game/` 자료를 포함하지 않습니다. 비공개 Release의 실행 패키지에는 게임 자료가 포함됩니다. 원본 게임 자료의 공개 재배포 권리는 확인되지 않았습니다. 직접 사용할 권한이 있는 자료를 로컬 `assets/game/`에 준비해야 소스로 게임을 빌드·실행할 수 있습니다.
 
 ```powershell
 ./scripts/Stage-GameAssets.ps1 -ReferenceDir 'C:/your-local-pinball-data'
