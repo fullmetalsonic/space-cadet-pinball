@@ -1,8 +1,9 @@
-﻿브라우저 실행용 빌드
+﻿Space Cadet Pinball 0.1.1-preview.1 — Web
 
-ZIP을 모두 압축 해제하세요. index.html을 더블클릭하는 대신 HTTP 서버로 실행합니다.
-Python이 설치된 PC에서 압축을 푼 폴더를 터미널로 열고:
-python -m http.server 8000 --bind 127.0.0.1
-브라우저에서 http://127.0.0.1:8000/ 을 여세요.
-첫 실행의 오프라인 준비 완료 후 같은 브라우저에서 오프라인 실행을 사용할 수 있습니다.
-이 ZIP은 공개 웹사이트 주소가 아닙니다. 원본 게임 자료를 포함한 비공개 보관용 패키지입니다.
+바로 플레이: https://fullmetalsonic.github.io/space-cadet-pinball/
+ZIP은 정적 HTTP/HTTPS 서버에 올려 실행합니다. file://로 index.html을 직접 열면 실행되지 않을 수 있습니다.
+Python이 있다면 압축을 푼 폴더에서 python -m http.server 4188 --bind 127.0.0.1 실행 후
+브라우저에서 http://127.0.0.1:4188/ 에 접속할 수 있습니다.
+데스크톱 하단 화면 버튼은 제거했고 휴대폰 터치 버튼은 유지합니다.
+기록은 브라우저별 로컬 저장입니다. 업데이트가 준비되면 화면 안내에서 적용합니다.
+네온 그래픽 샘플은 포함하지 않습니다. LICENSE/THIRD_PARTY_NOTICES/HQ_NOTICES와 licenses를 보존하세요.

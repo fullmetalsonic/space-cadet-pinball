@@ -1,1 +1,4 @@
 * -text
+*.data binary
+*.wasm binary
+*.png binary

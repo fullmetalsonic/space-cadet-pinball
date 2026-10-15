@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "version": "d45f04c0e543ab556b2bcf43b425835d37a306326312720c0f3e922ea6e17204",
-  "sourceVersion": "sensor-removal-bf6986ccc72d4a7459d3c79fc75f4f78a5807fdb9d5e7613fd17661fb99016d3-capture-release-d035eafb82f0d62f9fe12963436ab4166995cdac6097f8d16a168d6d4800d10b",
+  "version": "afa239636fd2b7fff8833053f31105cae7cdf9d6f4b1b3f5c28c4fa2b435aea1",
+  "sourceVersion": "e78b89b3cf1429f984ddc71531811f901fcc7f62",
   "assets": [
     {
       "url": "bootstrap.mjs",
@@ -60,18 +60,18 @@
     },
     {
       "url": "SpaceCadetPinball.data",
-      "size": 11048248,
-      "sha256": "d4257ff157d19a802f845a01567f84aa44fe24d128dabe748adb26e44f7255c4"
+      "size": 15450605,
+      "sha256": "5d023e3f6e58f2c4d9975149624f22a65e652d5116e169e0d5a42f61f20c161f"
     },
     {
       "url": "SpaceCadetPinball.js",
-      "size": 197660,
-      "sha256": "81a68d7abc189205b16e9292b855cd19a90bd73b15e011ec2bf464649bd09f04"
+      "size": 198106,
+      "sha256": "c16532093bddea3de05fb363b4b9bd219f9115c7832667aaff0ad7ab600f395e"
     },
     {
       "url": "SpaceCadetPinball.wasm",
-      "size": 1877889,
-      "sha256": "847306b829ccf50e4b24a084c2ff32e9099ab0a1004a14e714d96342fdd94ed0"
+      "size": 1913862,
+      "sha256": "15123c91d3699b88cd9fd37c9ed67850873bbeff0cfba962052dbcafbd5f107c"
     },
     {
       "url": "sw-runtime.js",
