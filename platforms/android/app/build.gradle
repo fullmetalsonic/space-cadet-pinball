@@ -1,0 +1,58 @@
+plugins { id 'com.android.application' }
+def outputRoot = providers.gradleProperty('pinballBuildRoot').orNull
+// Explicit opt-in for bounded local audio observation; production default remains OFF.
+def audioDiagnostics = Boolean.parseBoolean(providers.gradleProperty('pinballAudioDiagnostics').getOrElse('false'))
+if (outputRoot) buildDir = file("${outputRoot}/app")
+
+android {
+    namespace 'com.codex.spacecadetpinball'
+    compileSdk 35
+    ndkVersion '28.2.13676358'
+    // Shared PC tool location; override without changing source on another host.
+    ndkPath providers.gradleProperty('pinballNdkPath').getOrElse('D:/Tools/android-ndk-r28c')
+    defaultConfig {
+        applicationId 'com.codex.spacecadetpinball'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+        ndk { abiFilters 'arm64-v8a' }
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_STL=c++_shared', '-DPINBALL_BUILD_PLATFORM=ANDROID'
+                if (audioDiagnostics) arguments '-DPINBALL_AUDIO_DIAGNOSTICS=ON'
+                targets 'main', 'SDL2', 'SDL2_mixer'
+            }
+        }
+    }
+    externalNativeBuild { cmake {
+        path '../native/CMakeLists.txt'; version '3.22.1'
+        if (outputRoot) buildStagingDirectory file("${outputRoot}/.cxx")
+    } }
+    sourceSets { main { assets.srcDirs = ['../../../assets', "$buildDir/generated/pinballAssets"] } }
+    packaging { jniLibs { useLegacyPackaging = false } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_11; targetCompatibility JavaVersion.VERSION_11 }
+    lint { abortOnError true }
+}
+dependencies {
+    compileOnly 'androidx.annotation:annotation:1.3.0'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+def sharedAssets = file('../../../assets')
+def assetManifest = file("$buildDir/generated/pinballAssets/pinball-assets.sha256")
+tasks.register('generatePinballAssetManifest') {
+    inputs.dir(sharedAssets)
+    outputs.file(assetManifest)
+    doLast {
+        def files = fileTree(sharedAssets).matching { include 'game/**', 'fonts/**', 'audio/**' }.files.sort { a,b -> a.path <=> b.path }
+        if (!files.any { it.name == 'PINBALL.DAT' } || !files.any { it.name == 'NotoSansKR.ttf' } || !files.any { it.name == 'TimGM6mb.sf2' }) throw new GradleException('Required game/font/music assets are missing')
+        assetManifest.parentFile.mkdirs()
+        assetManifest.text = files.collect { f ->
+            def digest = java.security.MessageDigest.getInstance('SHA-256')
+            f.withInputStream { input -> byte[] buffer = new byte[65536]; int count; while ((count=input.read(buffer)) != -1) digest.update(buffer,0,count) }
+            digest.digest().encodeHex().toString() + '\t' + sharedAssets.toPath().relativize(f.toPath()).toString().replace('\\','/')
+        }.join('\n') + '\n'
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'generatePinballAssetManifest' }

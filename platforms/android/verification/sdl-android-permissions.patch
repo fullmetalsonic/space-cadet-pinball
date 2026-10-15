@@ -1,0 +1,233 @@
+--- upstream/HIDDeviceBLESteamController.java
++++ app/src/main/java/org/libsdl/app/HIDDeviceBLESteamController.java
+@@ -75,7 +75,10 @@
+             mValue = value;
+         }
+ 
++        @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+         public void run() {
++            Context permissionContext = SDL.getContext();
++            if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) { mResult = false; return; }
+             // This is executed in main thread
+             BluetoothGattCharacteristic chr;
+ 
+@@ -185,7 +188,10 @@
+ 
+     // Because on Chromebooks we show up as a dual-mode device, it will attempt to connect TRANSPORT_AUTO, which will use TRANSPORT_BREDR instead
+     // of TRANSPORT_LE.  Let's force ourselves to connect low energy.
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     private BluetoothGatt connectGatt(boolean managed) {
++        Context permissionContext = SDL.getContext();
++        if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) return null;
+         if (Build.VERSION.SDK_INT >= 23 /* Android 6.0 (M) */) {
+             try {
+                 return mDevice.connectGatt(mManager.getContext(), managed, this, TRANSPORT_LE);
+@@ -201,6 +207,7 @@
+         return connectGatt(false);
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     protected int getConnectionState() {
+ 
+         Context context = mManager.getContext();
+@@ -216,10 +223,14 @@
+             return BluetoothProfile.STATE_DISCONNECTED;
+         }
+ 
++        if (Build.VERSION.SDK_INT >= 31 && context.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED) return BluetoothProfile.STATE_DISCONNECTED;
+         return btManager.getConnectionState(mDevice, BluetoothProfile.GATT);
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     public void reconnect() {
++        Context permissionContext = SDL.getContext();
++        if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) return;
+ 
+         if (getConnectionState() != BluetoothProfile.STATE_CONNECTED) {
+             mGatt.disconnect();
+@@ -228,7 +239,10 @@
+ 
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     protected void checkConnectionForChromebookIssue() {
++        Context permissionContext = SDL.getContext();
++        if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) return;
+         if (!mIsChromebook) {
+             // We only do this on Chromebooks, because otherwise it's really annoying to just attempt
+             // over and over.
+@@ -283,6 +297,7 @@
+         final HIDDeviceBLESteamController finalThis = this;
+         mHandler.postDelayed(new Runnable() {
+             @Override
++            @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+             public void run() {
+                 finalThis.checkConnectionForChromebookIssue();
+             }
+@@ -297,7 +312,10 @@
+         mIsRegistered = true;
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     private boolean probeService(HIDDeviceBLESteamController controller) {
++        Context permissionContext = SDL.getContext();
++        if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) return false;
+ 
+         if (isRegistered()) {
+             return true;
+@@ -375,6 +393,7 @@
+         // Run in main thread
+         mHandler.post(new Runnable() {
+             @Override
++            @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+             public void run() {
+                 synchronized (mOperations) {
+                     if (mCurrentOperation == null) {
+@@ -424,7 +443,10 @@
+             if (!isRegistered()) {
+                 mHandler.post(new Runnable() {
+                     @Override
++                    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+                     public void run() {
++                        Context permissionContext = SDL.getContext();
++                        if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) return;
+                         mGatt.discoverServices();
+                     }
+                 });
+@@ -437,7 +459,10 @@
+         // Disconnection is handled in SteamLink using the ACTION_ACL_DISCONNECTED Intent.
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
++                        Context permissionContext = SDL.getContext();
++                        if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) return;
+         //Log.v(TAG, "onServicesDiscovered status=" + status);
+         if (status == 0) {
+             if (gatt.getServices().size() == 0) {
+@@ -491,7 +516,10 @@
+         //Log.v(TAG, "onDescriptorRead status=" + status);
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
++        Context permissionContext = SDL.getContext();
++        if (permissionContext == null || (Build.VERSION.SDK_INT >= 31 && permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED)) return;
+         BluetoothGattCharacteristic chr = descriptor.getCharacteristic();
+         //Log.v(TAG, "onDescriptorWrite status=" + status + " uuid=" + chr.getUuid() + " descriptor=" + descriptor.getUuid());
+ 
+@@ -631,11 +659,13 @@
+     }
+ 
+     @Override
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     public void shutdown() {
+         close();
+ 
+         BluetoothGatt g = mGatt;
+-        if (g != null) {
++        Context permissionContext = SDL.getContext();
++        if (g != null && permissionContext != null && (Build.VERSION.SDK_INT < 31 || permissionContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED)) {
+             g.disconnect();
+             g.close();
+             mGatt = null;
+--- upstream/HIDDeviceManager.java
++++ app/src/main/java/org/libsdl/app/HIDDeviceManager.java
+@@ -193,7 +193,8 @@
+         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+         filter.addAction(HIDDeviceManager.ACTION_USB_PERMISSION);
+-        mContext.registerReceiver(mUsbBroadcast, filter);
++        // This overload exists since API 26; the flag gains its export protection on API 33.
++        mContext.registerReceiver(mUsbBroadcast, filter, Context.RECEIVER_NOT_EXPORTED);
+ 
+         for (UsbDevice usbDevice : mUsbManager.getDeviceList().values()) {
+             handleUsbDeviceAttached(usbDevice);
+@@ -357,11 +358,12 @@
+         }
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     private void initializeBluetooth() {
+         Log.d(TAG, "Initializing Bluetooth");
+ 
+         if (Build.VERSION.SDK_INT >= 31 /* Android 12  */ &&
+-            mContext.getPackageManager().checkPermission(android.Manifest.permission.BLUETOOTH_CONNECT, mContext.getPackageName()) != PackageManager.PERMISSION_GRANTED) {
++            mContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+             Log.d(TAG, "Couldn't initialize Bluetooth, missing android.permission.BLUETOOTH_CONNECT");
+             return;
+         }
+@@ -431,7 +433,9 @@
+     // Chromebooks do not pass along ACTION_ACL_CONNECTED / ACTION_ACL_DISCONNECTED properly.
+     // This function provides a sort of dummy version of that, watching for changes in the
+     // connected devices and attempting to add controllers as things change.
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     public void chromebookConnectionHandler() {
++        if (Build.VERSION.SDK_INT >= 31 && mContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return;
+         if (!mIsChromebook) {
+             return;
+         }
+@@ -505,11 +509,14 @@
+         }
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.BLUETOOTH_CONNECT", conditional=true)
+     public boolean isSteamController(BluetoothDevice bluetoothDevice) {
+         // Sanity check.  If you pass in a null device, by definition it is never a Steam Controller.
+         if (bluetoothDevice == null) {
+             return false;
+         }
++
++        if (Build.VERSION.SDK_INT >= 31 && mContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return false;
+ 
+         // If the device has no local name, we really don't want to try an equality check against it.
+         if (bluetoothDevice.getName() == null) {
+--- upstream/SDLAudioManager.java
++++ app/src/main/java/org/libsdl/app/SDLAudioManager.java
+@@ -71,6 +71,7 @@
+         }
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.RECORD_AUDIO", conditional=true)
+     protected static int[] open(boolean isCapture, int sampleRate, int audioFormat, int desiredChannels, int desiredFrames, int deviceId) {
+         int channelConfig;
+         int sampleSize;
+@@ -225,6 +226,7 @@
+         int[] results = new int[4];
+ 
+         if (isCapture) {
++            if (mContext == null || mContext.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) return null;
+             if (mAudioRecord == null) {
+                 mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, sampleRate,
+                         channelConfig, audioFormat, desiredFrames * frameSize);
+--- upstream/SDLControllerManager.java
++++ app/src/main/java/org/libsdl/app/SDLControllerManager.java
+@@ -472,7 +472,9 @@
+ 
+ class SDLHapticHandler_API26 extends SDLHapticHandler {
+     @Override
++    @androidx.annotation.RequiresPermission(value="android.permission.VIBRATE", conditional=true)
+     public void run(int device_id, float intensity, int length) {
++        if (SDL.getContext() == null || SDL.getContext().checkSelfPermission(android.Manifest.permission.VIBRATE) != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
+         SDLHaptic haptic = getHaptic(device_id);
+         if (haptic != null) {
+             Log.d("SDL", "Rtest: Vibe with intensity " + intensity + " for " + length);
+@@ -516,14 +518,18 @@
+         mHaptics = new ArrayList<SDLHaptic>();
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.VIBRATE", conditional=true)
+     public void run(int device_id, float intensity, int length) {
++        if (SDL.getContext() == null || SDL.getContext().checkSelfPermission(android.Manifest.permission.VIBRATE) != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
+         SDLHaptic haptic = getHaptic(device_id);
+         if (haptic != null) {
+             haptic.vib.vibrate(length);
+         }
+     }
+ 
++    @androidx.annotation.RequiresPermission(value="android.permission.VIBRATE", conditional=true)
+     public void stop(int device_id) {
++        if (SDL.getContext() == null || SDL.getContext().checkSelfPermission(android.Manifest.permission.VIBRATE) != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
+         SDLHaptic haptic = getHaptic(device_id);
+         if (haptic != null) {
+             haptic.vib.cancel();

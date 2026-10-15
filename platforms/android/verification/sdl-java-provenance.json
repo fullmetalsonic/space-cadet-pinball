@@ -1,0 +1,63 @@
+{
+  "release": "SDL2 2.30.12",
+  "archive_sha256": "aa2808d0f2dc6b383c6689bf6d166e2de62db4d58be989e4b052acb31df0fba3",
+  "patch_reason": "Actual permission guards and conditional permission contracts for optional Bluetooth/audio capture/haptics; API26 registerReceiver overload with NOT_EXPORTED protection on API33+. No manifest permissions added; no lint exemptions.",
+  "lint_contract_source": "https://android.googlesource.com/platform/tools/base/+/mirror-goog-studio-main/lint/libs/lint-checks/src/main/java/com/android/tools/lint/checks/PermissionDetector.kt",
+  "receiver_reference": "https://developer.android.com/reference/android/content/Context#registerReceiver(android.content.BroadcastReceiver,%20android.content.IntentFilter,%20int)",
+  "files": [
+    {
+      "file": "HIDDevice.java",
+      "upstream_sha256": "e9d8b4edbf3821e366836c30c3f4746d915a5a765938181edae854b12cd975e9",
+      "project_sha256": "e9d8b4edbf3821e366836c30c3f4746d915a5a765938181edae854b12cd975e9",
+      "modified": false
+    },
+    {
+      "file": "HIDDeviceBLESteamController.java",
+      "upstream_sha256": "78a07450afa0d7078496a219a32b4bce5c00671317bc228333e9bff5e3da500d",
+      "project_sha256": "e7c98482e6e713785d1942f4c18440b95ce29a856d12dd8f52565dfbf4e4bffc",
+      "modified": true
+    },
+    {
+      "file": "HIDDeviceManager.java",
+      "upstream_sha256": "7f16fa997af31b70dabf136f5d6430f8f00437bfb0a6bc2457e9046e2fe34325",
+      "project_sha256": "d760975fc69e71792f81b1d9fa44506f891b5d431712ed01095366e4d9649676",
+      "modified": true
+    },
+    {
+      "file": "HIDDeviceUSB.java",
+      "upstream_sha256": "1c2cdd25da7592c5a66f67701af909e0cb2ec65ff10f38c2e5193959bcf5b7de",
+      "project_sha256": "1c2cdd25da7592c5a66f67701af909e0cb2ec65ff10f38c2e5193959bcf5b7de",
+      "modified": false
+    },
+    {
+      "file": "SDL.java",
+      "upstream_sha256": "4a5172717ed6613439e241341324554a4af399f54188ded7567584bc0e30d9cb",
+      "project_sha256": "4a5172717ed6613439e241341324554a4af399f54188ded7567584bc0e30d9cb",
+      "modified": false
+    },
+    {
+      "file": "SDLActivity.java",
+      "upstream_sha256": "88451e16f55287796212d894228ef0436ca5f2f776fb5a949b0246f2ef0414bc",
+      "project_sha256": "88451e16f55287796212d894228ef0436ca5f2f776fb5a949b0246f2ef0414bc",
+      "modified": false
+    },
+    {
+      "file": "SDLAudioManager.java",
+      "upstream_sha256": "27db11b8436dc4b8393241120ce9107b081203a27fa39c36efd42a4a7ec9af9d",
+      "project_sha256": "d1fa3927de41d49053c1c4a23191b9993d7083baf39aef2ee506513c5bea79bb",
+      "modified": true
+    },
+    {
+      "file": "SDLControllerManager.java",
+      "upstream_sha256": "5f86e8a667797fb365a1bb5ac19f7c4fd5057b46277d7b6cfd545c6c6be11248",
+      "project_sha256": "15bc177e9e90b1202480a1634b8031e401aa5543f14ae133d7640602e6017c9a",
+      "modified": true
+    },
+    {
+      "file": "SDLSurface.java",
+      "upstream_sha256": "5b46e26e8ba888110f8908ef0def60c412ba6e8351c5d322f9b9406644cdb161",
+      "project_sha256": "5b46e26e8ba888110f8908ef0def60c412ba6e8351c5d322f9b9406644cdb161",
+      "modified": false
+    }
+  ]
+}

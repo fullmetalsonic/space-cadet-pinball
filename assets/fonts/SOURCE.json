@@ -1,0 +1,9 @@
+{
+  "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf",
+  "source_sha256": "194018e6b2b293a7964f037b25c0249ce1418bc9ab3c971060a03aa57861e252",
+  "fonttools_version": "4.66.1",
+  "conversion": "wght=400 static; Korean syllables/Jamo, Latin U+0020..02FF and every English/Korean translation character",
+  "license": "OFL.txt (SIL OFL 1.1), original copyright preserved",
+  "result_sha256": "4d8cf66d92d8e362ca90754ae8a7ec1c26a95d2630788d5fff3f11566d2d5fe6",
+  "result_size": 2765176
+}

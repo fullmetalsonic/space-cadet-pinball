@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">3D Pinball Space Cadet</string>
+    <string name="resume">Resume game</string>
+    <string name="exit">Exit</string>
+    <string name="paused">Game paused</string>
+    <string name="resume_help">Choose Resume to continue playing.</string>
+    <string name="content_error_title">Game content preparation failed</string>
+    <string name="content_error">Game content could not be prepared safely. Saved scores and settings are preserved. Restart the app or reinstall the same APK.</string>
+</resources>

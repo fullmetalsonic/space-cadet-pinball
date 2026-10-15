@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101a2d">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>3D 핀볼 — 우주 사관생도</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./shell.css">
+  <script type="module" src="./bootstrap.mjs"></script>
+</head>
+<body>
+  <main id="app" aria-label="3D 핀볼">
+    <header>
+      <h1>3D 핀볼 <span>우주 사관생도</span></h1>
+      <p id="status" role="status" aria-live="polite">게임을 불러오는 중입니다.</p>
+    </header>
+    <div id="notice" role="status" aria-live="polite" hidden>
+      <span id="notice-text"></span>
+      <button id="retry-save" type="button" hidden>저장 다시 시도</button>
+      <button id="apply-update" type="button" hidden>저장 후 새 버전 적용</button>
+      <button id="later-update" type="button" hidden>나중에</button>
+    </div>
+    <section id="stage" aria-label="게임 화면">
+      <canvas id="canvas" tabindex="0" width="800" height="556" aria-label="핀볼 게임. 첫 조작 시 게임 화면에 포커스가 이동합니다."></canvas>
+      <div id="startup">
+        <p id="startup-text">게임과 저장된 설정을 불러오는 중입니다.</p>
+        <div class="actions">
+          <button id="retry-restore" type="button" hidden>불러오기 다시 시도</button>
+          <button id="continue-unsaved" type="button" hidden>이번에는 저장 없이 실행</button>
+          <button id="retry-load" type="button" hidden>다시 불러오기</button>
+        </div>
+      </div>
+    </section>
+    <footer>설정과 최고 점수는 이 브라우저에 저장됩니다. 다시 열면 새 게임으로 시작합니다.</footer>
+  </main>
+</body>
+</html>

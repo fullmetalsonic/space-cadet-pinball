@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">3D 핀볼 우주 사관생도</string>
+    <string name="resume">게임 재개</string>
+    <string name="exit">종료</string>
+    <string name="paused">게임 일시정지</string>
+    <string name="resume_help">게임 재개를 누르면 계속합니다.</string>
+    <string name="content_error_title">게임 자료 준비 실패</string>
+    <string name="content_error">게임 자료를 안전하게 준비하지 못했습니다. 저장 점수와 설정은 보존됩니다. 앱을 다시 실행하거나 같은 APK로 다시 설치하세요.</string>
+</resources>
