@@ -13,6 +13,9 @@
 #include "font_selection.h"
 #include "pinball_platform.h"
 #include "Help.h"
+#include "hq_render.h"
+#include "update_check.h"
+#include <limits>
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
@@ -36,6 +39,8 @@ int winmain::mouse_down;
 bool winmain::no_time_loss = false;
 
 bool winmain::restart = false;
+bool winmain::StartupWindowSizePending = false;
+SDL_Point winmain::StartupWindowSize{};
 
 std::vector<float> winmain::gfrDisplay{};
 unsigned winmain::gfrOffset = 0;
@@ -62,6 +67,90 @@ std::string settingsPath;
 char* sessionBasePath = nullptr;
 char* sessionPrefPath = nullptr;
 bool sessionAudioOpened = false, sessionAudioDisabled = false;
+#if defined(_WIN32) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+update_check::Manager updateManager;
+bool showUpdateWindow = false;
+
+void RenderUpdateWindow()
+{
+	if (!showUpdateWindow) return;
+	const bool ko = translations::GetCurrentLanguage()->Language == Lang::Korean;
+	ImGui::SetNextWindowSize(ImVec2(540, 0), ImGuiCond_FirstUseEver);
+	if (ImGui::Begin(ko ? u8"업데이트 확인###UpdateCheck" : "Check for updates###UpdateCheck", &showUpdateWindow,
+		ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		const auto result = updateManager.Snapshot();
+		ImGui::Text(ko ? u8"현재 버전: %s" : "Current version: %s", PINBALL_RELEASE_VERSION);
+		ImGui::Text(ko ? u8"최신 정식 버전: %s" : "Latest stable version: %s",
+			result.LatestVersion.empty() ? (ko ? u8"확인되지 않음" : "Unknown") : result.LatestVersion.c_str());
+		ImGui::TextWrapped("%s", update_check::StatusText(result.State, ko));
+		if (!result.Detail.empty()) ImGui::TextWrapped("%s", result.Detail.c_str());
+		ImGui::Separator();
+		ImGui::TextWrapped("%s", result.ReleaseUrl.c_str());
+		if (ImGui::Button(ko ? u8"Release 페이지 열기" : "Open release page"))
+			SDL_OpenURL(result.ReleaseUrl.c_str());
+		ImGui::SameLine();
+		ImGui::BeginDisabled(result.State == update_check::Status::Checking);
+		if (ImGui::Button(ko ? u8"다시 확인" : "Check again")) updateManager.Request();
+		ImGui::EndDisabled();
+	}
+	ImGui::End();
+}
+#endif
+}
+
+SDL_Rect winmain::CalculateWindowedRect(int boardWidth, int boardHeight, int renderScale, int menuHeight,
+	const SDL_Rect& usableBounds, const WindowBorders& borders)
+{
+	if (boardWidth <= 0 || boardHeight <= 0 || renderScale < 1 || usableBounds.w <= 0 || usableBounds.h <= 0)
+		return {};
+	const int64_t left = std::max(0, borders.Left), top = std::max(0, borders.Top);
+	const int64_t right = std::max(0, borders.Right), bottom = std::max(0, borders.Bottom);
+	menuHeight = std::max(0, menuHeight);
+	const auto availableWidth = int64_t(usableBounds.w) - left - right;
+	const auto availableHeight = int64_t(usableBounds.h) - top - bottom - menuHeight;
+	if (availableWidth < 1 || availableHeight < 1) return {};
+	const double scale = std::min({double(std::min(2, renderScale)),
+		double(availableWidth) / boardWidth, double(availableHeight) / boardHeight});
+	const auto width = std::max(1, static_cast<int>(std::floor(boardWidth * scale)));
+	const auto height = std::max(1, static_cast<int>(std::floor(boardHeight * scale))) + menuHeight;
+	const auto x = int64_t(usableBounds.x) + (usableBounds.w - width - left - right) / 2 + left;
+	const auto y = int64_t(usableBounds.y) + (usableBounds.h - height - top - bottom) / 2 + top;
+	if (x < std::numeric_limits<int>::min() || x > std::numeric_limits<int>::max() ||
+		y < std::numeric_limits<int>::min() || y > std::numeric_limits<int>::max()) return {};
+	return SDL_Rect{static_cast<int>(x), static_cast<int>(y), width, height};
+}
+
+void winmain::ApplyWindowedSize(bool highQuality)
+{
+#if defined(_WIN32) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+	if (!MainWindow || (SDL_GetWindowFlags(MainWindow) & SDL_WINDOW_FULLSCREEN)) return;
+	SDL_Rect usable{};
+	const auto display = SDL_GetWindowDisplayIndex(MainWindow);
+	if (display < 0 || SDL_GetDisplayUsableBounds(display, &usable) != 0) return;
+	WindowBorders borders{};
+	SDL_GetWindowBordersSize(MainWindow, &borders.Top, &borders.Left, &borders.Bottom, &borders.Right);
+	int menuHeight = Options.ShowMenu ? MainMenuHeight : 0;
+	if (Options.ShowMenu && menuHeight == 0 && ImIO && ImIO->Fonts->Fonts.Size)
+	{
+		const auto font = ImIO->FontDefault ? ImIO->FontDefault : ImIO->Fonts->Fonts[0];
+		menuHeight = static_cast<int>(std::ceil(font->FontSize * font->Scale * ImIO->FontGlobalScale +
+			ImGui::GetStyle().FramePadding.y * 2));
+	}
+	const auto& res = fullscrn::resolution_array[fullscrn::GetResolution()];
+	const auto rect = CalculateWindowedRect(res.TableWidth, res.TableHeight, highQuality ? 2 : 1,
+		menuHeight, usable, borders);
+	if (rect.w <= 0 || rect.h <= 0) return;
+	SDL_SetWindowSize(MainWindow, rect.w, rect.h);
+	SDL_SetWindowPosition(MainWindow, rect.x, rect.y);
+	fullscrn::window_size_changed();
+#endif
+}
+
+void winmain::ResizeHighQualityWindow()
+{
+	StartupWindowSizePending = false;
+	if (Options.HighQuality && hq_render::Enabled()) ApplyWindowedSize(true);
 }
 
 int winmain::WinMain(LPCSTR lpCmdLine)
@@ -175,6 +264,9 @@ int winmain::WinMain(LPCSTR lpCmdLine)
 	}
 
 	auto resetAllOptions = strstr(lpCmdLine, "-reset") != nullptr;
+#if defined(_WIN32) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+	updateManager.Request(); // Silent, non-blocking, once across game restarts.
+#endif
 	do
 	{
 		restart = false;
@@ -254,12 +346,19 @@ int winmain::WinMain(LPCSTR lpCmdLine)
 			Options.FullScreen = true;
 		}
 
+		StartupWindowSizePending = false;
 #ifndef __ANDROID__
 		// Android window dimensions belong to SDLActivity surface resize callbacks.
 		if (!Options.FullScreen)
 		{
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+			ApplyWindowedSize(Options.HighQuality);
+			StartupWindowSizePending = Options.ShowMenu;
+			SDL_GetWindowSize(MainWindow, &StartupWindowSize.x, &StartupWindowSize.y);
+#else
 			auto resInfo = &fullscrn::resolution_array[fullscrn::GetResolution()];
 			SDL_SetWindowSize(MainWindow, resInfo->TableWidth, resInfo->TableHeight + pinball_platform::ControlsHeight());
+#endif
 		}
 #endif
 		SDL_ShowWindow(window);
@@ -294,6 +393,10 @@ int winmain::WinMain(LPCSTR lpCmdLine)
 		ImGui::DestroyContext();
 	}
 	while (restart);
+
+#if defined(_WIN32) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+	updateManager.Shutdown();
+#endif
 
 	if (!noAudio)
 	{
@@ -564,6 +667,11 @@ void winmain::RenderUi()
 			MainMenuHeight = currentMenuHeight;
 			fullscrn::window_size_changed();
 		}
+		if (StartupWindowSizePending)
+		{
+			StartupWindowSizePending = false;
+			ApplyWindowedSize(Options.HighQuality);
+		}
 
 		if (ImGui::BeginMenu(pb::get_rc_string(Msg::Menu1_Game)))
 		{
@@ -672,6 +780,20 @@ void winmain::RenderUi()
 
 			if (ImGui::BeginMenu(translations::GetTranslation(Msg::UiGraphics)))
 			{
+				if (ImGui::BeginMenu(translations::GetTranslation(Msg::UiDisplayMode)))
+				{
+					if (ImGui::MenuItem(translations::GetTranslation(Msg::UiOriginalDisplay), nullptr, !Options.HighQuality))
+					{
+						render::ApplyDisplayMode(false);
+					}
+					if (ImGui::MenuItem(translations::GetTranslation(Msg::UiHighQualityDisplay), nullptr, Options.HighQuality))
+					{
+						render::ApplyDisplayMode(true);
+					}
+					if (!hq_render::Error().empty())
+						ImGui::TextWrapped("%s", translations::GetTranslation(Msg::UiHighQualityUnavailable));
+					ImGui::EndMenu();
+				}
 				if (ImGui::MenuItem(pb::get_rc_string(Msg::Menu1_WindowUniformScale), nullptr, Options.UniformScaling))
 				{
 					options::toggle(Menu1::WindowUniformScale);
@@ -795,6 +917,14 @@ void winmain::RenderUi()
             if (ImGui::MenuItem(translations::GetTranslation(Msg::UiHelpCaption)))
             { pause(false); Help::Show(); }
 
+#if defined(_WIN32) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+			if (ImGui::MenuItem(translations::GetCurrentLanguage()->Language == Lang::Korean ? u8"업데이트 확인" : "Check for updates"))
+			{
+				showUpdateWindow = true;
+				updateManager.Request();
+			}
+#endif
+
 #ifndef NDEBUG
 			if (ImGui::MenuItem("ImGui Demo", nullptr, ShowImGuiDemo))
 			{
@@ -916,6 +1046,9 @@ void winmain::RenderUi()
 	}
 
 	Help::Render();
+#if defined(_WIN32) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+	RenderUpdateWindow();
+#endif
 	pinball_platform::RenderStorageNotice();
 	pinball_platform::RenderControls();
 	// Print game texts on the sidebar
@@ -1134,6 +1267,9 @@ int winmain::event_handler(const SDL_Event* event)
 			break;
 		case SDL_WINDOWEVENT_SIZE_CHANGED:
 		case SDL_WINDOWEVENT_RESIZED:
+			if (StartupWindowSizePending &&
+				(event->window.data1 != StartupWindowSize.x || event->window.data2 != StartupWindowSize.y))
+				StartupWindowSizePending = false;
 			pinball_platform::CancelInputs();
 			fullscrn::window_size_changed();
 			break;

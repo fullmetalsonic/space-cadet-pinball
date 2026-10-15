@@ -8,6 +8,8 @@ dist/
 **/.idea/
 **/__pycache__/
 assets/game/
+assets/hq/
+assets/art-sample/
 자료/xp-original/files/
 자료/xp-original/*.zip
 verification/screenshots/

@@ -47,6 +47,9 @@ endif()
 set(SOURCE_FILES
         SpaceCadetPinball/control.cpp
         SpaceCadetPinball/control.h
+        SpaceCadetPinball/update_check.cpp
+        SpaceCadetPinball/update_check.h
+        SpaceCadetPinball/release_version.h
         SpaceCadetPinball/EmbeddedData.cpp
         SpaceCadetPinball/EmbeddedData.h
         SpaceCadetPinball/font_selection.cpp
@@ -55,6 +58,8 @@ set(SOURCE_FILES
         SpaceCadetPinball/fullscrn.h
         SpaceCadetPinball/gdrv.cpp
         SpaceCadetPinball/gdrv.h
+        SpaceCadetPinball/hq_render.cpp
+        SpaceCadetPinball/hq_render.h
         SpaceCadetPinball/GroupData.cpp
         SpaceCadetPinball/GroupData.h
         SpaceCadetPinball/high_score.cpp
@@ -212,13 +217,23 @@ else()
     set(PINBALL_TARGET SpaceCadetPinball)
 endif()
 target_link_libraries(${PINBALL_TARGET} PRIVATE pinball_core)
+if(WIN32)
+    target_link_libraries(pinball_core PUBLIC winhttp)
+endif()
 if(EMSCRIPTEN)
     target_compile_options(pinball_core PUBLIC -fexceptions "-sUSE_SDL=2" "-sUSE_SDL_MIXER=2" "-sSDL2_MIXER_FORMATS=[]")
     target_link_options(${PINBALL_TARGET} PRIVATE -fexceptions "-sUSE_SDL=2" "-sUSE_SDL_MIXER=2" "-sSDL2_MIXER_FORMATS=[]"
         "-sALLOW_MEMORY_GROWTH=1" "-sFORCE_FILESYSTEM=1" "-sDYNAMIC_EXECUTION=0"
         "-sEXPORTED_FUNCTIONS=['_main','_platform_notify_pause','_platform_reset_input_session','_platform_cancel_inputs','_platform_flush_settings','_platform_activate_audio','_platform_is_english','_platform_web_name_edit','_platform_web_name_submit']"
         "-sEXPORTED_RUNTIME_METHODS=['FS','addRunDependency','removeRunDependency','ccall']"
-        "-lidbfs.js" "--preload-file" "${PINBALL_ASSETS_DIR}@/assets")
+        "-lidbfs.js")
+    foreach(asset_directory game fonts audio)
+        target_link_options(${PINBALL_TARGET} PRIVATE "SHELL:--preload-file \"${PINBALL_ASSETS_DIR}/${asset_directory}@/assets/${asset_directory}\"")
+    endforeach()
+    if(EXISTS "${PINBALL_ASSETS_DIR}/hq/pinball-2x.hqpb")
+        target_link_options(${PINBALL_TARGET} PRIVATE "SHELL:--preload-file \"${PINBALL_ASSETS_DIR}/hq/pinball-2x.hqpb@/assets/hq/pinball-2x.hqpb\"")
+        set_property(TARGET ${PINBALL_TARGET} APPEND PROPERTY LINK_DEPENDS "${PINBALL_ASSETS_DIR}/hq/pinball-2x.hqpb")
+    endif()
     set_target_properties(${PINBALL_TARGET} PROPERTIES SUFFIX ".js")
 else()
     target_link_libraries(pinball_core PUBLIC SDL2::SDL2 SDL2_mixer::SDL2_mixer)
@@ -229,8 +244,16 @@ endif()
 if(WIN32)
     add_custom_command(TARGET ${PINBALL_TARGET} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL2::SDL2> $<TARGET_FILE_DIR:${PINBALL_TARGET}>
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL2_mixer::SDL2_mixer> $<TARGET_FILE_DIR:${PINBALL_TARGET}>
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${PINBALL_ASSETS_DIR}" "$<TARGET_FILE_DIR:${PINBALL_TARGET}>/assets")
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL2_mixer::SDL2_mixer> $<TARGET_FILE_DIR:${PINBALL_TARGET}>)
+    foreach(asset_directory game fonts audio)
+        add_custom_command(TARGET ${PINBALL_TARGET} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${PINBALL_ASSETS_DIR}/${asset_directory}" "$<TARGET_FILE_DIR:${PINBALL_TARGET}>/assets/${asset_directory}")
+    endforeach()
+    if(EXISTS "${PINBALL_ASSETS_DIR}/hq/pinball-2x.hqpb")
+        add_custom_command(TARGET ${PINBALL_TARGET} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PINBALL_TARGET}>/assets/hq"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PINBALL_ASSETS_DIR}/hq/pinball-2x.hqpb" "$<TARGET_FILE_DIR:${PINBALL_TARGET}>/assets/hq/pinball-2x.hqpb")
+    endif()
 endif()
 set_source_files_properties(
     SpaceCadetPinball/imgui.cpp SpaceCadetPinball/imgui_sdl.cpp SpaceCadetPinball/imgui_draw.cpp
@@ -240,8 +263,27 @@ set_source_files_properties(
 target_precompile_headers(pinball_core PRIVATE SpaceCadetPinball/pch.h)
 
 option(PINBALL_BUILD_TESTS "Build real-core runtime checks" OFF)
+option(PINBALL_BUILD_HQ_ASSET_TOOLS "Build local normalized graphic export tools" OFF)
+if(PINBALL_BUILD_HQ_ASSET_TOOLS AND WIN32 AND NOT ANDROID AND NOT EMSCRIPTEN)
+    add_executable(pinball_export_hq_assets tools/export_hq_assets.cpp SpaceCadetPinball/SpaceCadetPinball.cpp)
+    target_compile_definitions(pinball_export_hq_assets PRIVATE PINBALL_TEST_MAIN)
+    target_include_directories(pinball_export_hq_assets PRIVATE SpaceCadetPinball)
+    target_link_libraries(pinball_export_hq_assets PRIVATE pinball_core)
+    if(MINGW)
+        target_link_options(pinball_export_hq_assets PRIVATE -static)
+    endif()
+endif()
 if(PINBALL_BUILD_TESTS AND NOT ANDROID AND NOT EMSCRIPTEN)
     enable_testing()
+    add_executable(pinball_update_check_tests EXCLUDE_FROM_ALL tests/update_check_tests.cpp SpaceCadetPinball/update_check.cpp)
+    target_include_directories(pinball_update_check_tests PRIVATE SpaceCadetPinball)
+    if(WIN32)
+        target_link_libraries(pinball_update_check_tests PRIVATE winhttp)
+    endif()
+    if(MINGW)
+        target_link_options(pinball_update_check_tests PRIVATE -static)
+    endif()
+    add_test(NAME update_check_policy COMMAND pinball_update_check_tests)
     add_executable(pinball_runtime_checks tests/runtime_checks.cpp SpaceCadetPinball/SpaceCadetPinball.cpp)
     target_compile_definitions(pinball_runtime_checks PRIVATE PINBALL_TEST_MAIN)
     target_include_directories(pinball_runtime_checks PRIVATE SpaceCadetPinball)
@@ -250,4 +292,11 @@ if(PINBALL_BUILD_TESTS AND NOT ANDROID AND NOT EMSCRIPTEN)
         target_link_options(pinball_runtime_checks PRIVATE -static)
     endif()
     add_test(NAME runtime_boundaries COMMAND pinball_runtime_checks "${PINBALL_ASSETS_DIR}")
+    add_executable(pinball_hq_checks tests/hq_render_checks.cpp SpaceCadetPinball/SpaceCadetPinball.cpp)
+    target_compile_definitions(pinball_hq_checks PRIVATE PINBALL_TEST_MAIN)
+    target_include_directories(pinball_hq_checks PRIVATE SpaceCadetPinball)
+    target_link_libraries(pinball_hq_checks PRIVATE pinball_core)
+    if(MINGW)
+        target_link_options(pinball_hq_checks PRIVATE -static)
+    endif()
 endif()

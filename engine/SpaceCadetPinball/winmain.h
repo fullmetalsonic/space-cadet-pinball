@@ -1,5 +1,6 @@
 #pragma once
 #include "gdrv.h"
+#include "release_version.h"
 
 enum class GameBindings;
 
@@ -66,7 +67,7 @@ class winmain
 	using TimePoint = std::chrono::time_point<Clock>;
 
 public:
-	static constexpr const char* Version = "2.1.1 DEV";
+	static constexpr const char* Version = PINBALL_RELEASE_VERSION;
 	static bool single_step;
 	static SDL_Window* MainWindow;
 	static SDL_Renderer* Renderer;
@@ -88,13 +89,22 @@ public:
 	static void UpdateFrameRate();
 	static void HandleGameBinding(GameBindings binding, bool shortcut);
 	static void RenderUi();
+	struct WindowBorders { int Left, Top, Right, Bottom; };
+	// Returns a client rectangle in SDL screen coordinates, centered with its borders inside usableBounds.
+	static SDL_Rect CalculateWindowedRect(int boardWidth, int boardHeight, int renderScale, int menuHeight,
+		const SDL_Rect& usableBounds, const WindowBorders& borders);
+	static void ResizeHighQualityWindow();
 private:
+	friend struct PinballHqLoopProbe;
 	static int return_value;
 	static int mouse_down, last_mouse_x, last_mouse_y;
 	static bool no_time_loss, activated, bQuit, has_focus, DispGRhistory, DispFrameRate;
 	static std::vector<float> gfrDisplay;
 	static std::string FpsDetails, PrevSdlError;
 	static bool restart;
+	static bool StartupWindowSizePending;
+	static SDL_Point StartupWindowSize;
+	static void ApplyWindowedSize(bool highQuality);
 	static bool ShowAboutDialog;
 	static bool ShowImGuiDemo;
 	static bool ShowSpriteViewer;

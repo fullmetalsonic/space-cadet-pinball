@@ -94,15 +94,7 @@ pinball_platform::ControlLayout pinball_platform::CalculateLayout(int width, int
     layout.Landscape = mobile && width > height && width / scale >= 360;
     if (!mobile) {
         layout.HeaderHeight = menuHeight;
-        layout.DockHeight = std::max(96, static_cast<int>(96 * scale));
-        layout.BoardBounds = SDL_Rect{0, menuHeight, width, std::max(1, height - menuHeight - layout.DockHeight)};
-        for (int index = 0; index < 7; ++index) {
-            const auto row = index < 3 ? 1 : 0;
-            const auto column = index < 3 ? index : index - 3;
-            const auto columns = row == 1 ? 3 : 4;
-            layout.Buttons[index] = SDL_Rect{column * width / columns + 3, height - layout.DockHeight + row * layout.DockHeight / 2 + 3,
-                width / columns - 6, layout.DockHeight / 2 - 6};
-        }
+        layout.BoardBounds = SDL_Rect{0, menuHeight, width, std::max(1, height - menuHeight)};
         return layout;
     }
     const auto dp = [scale](float value) { return static_cast<int>(std::ceil(value * scale)); };
@@ -397,6 +389,8 @@ int pinball_platform::ControlsHeight()
 
 void pinball_platform::RenderControls()
 {
+    const auto layout = GetControlLayout();
+    if (!layout.Mobile) return;
     if (options::IsControlDialogOpen() || Help::IsOpen() ||
         ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)) return;
     englishLanguage = options::Options.Language.V == "en";
@@ -406,7 +400,6 @@ void pinball_platform::RenderControls()
         translations::GetTranslation(Msg::UiNudgeRight), translations::GetTranslation(Msg::UiNudgeForward),
         translations::GetTranslation(winmain::single_step ? Msg::UiResume : Msg::UiPause) };
     auto draw = ImGui::GetForegroundDrawList();
-    const auto layout = GetControlLayout();
     for (int index = 0; index < 7; ++index)
     {
         const auto rect = layout.Buttons[index];

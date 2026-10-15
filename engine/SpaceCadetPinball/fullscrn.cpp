@@ -72,7 +72,10 @@ int fullscrn::disableFullscreen()
 	if (display_changed)
 	{
 		if (SDL_SetWindowFullscreen(winmain::MainWindow, 0) == 0)
+		{
 			display_changed = 0;
+			winmain::ResizeHighQualityWindow();
+		}
 	}
 
 	return 0;

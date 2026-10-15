@@ -34,6 +34,8 @@ assets/
 
 네이티브·웹 CMake의 자료 위치는 `-DPINBALL_ASSETS_DIR=<절대 자료 경로>`로 바꿀 수 있습니다. Android의 자산 수집은 현재 저장소 루트 `assets/`를 사용하므로 같은 옵션만으로 Android 자산 위치가 바뀌지는 않습니다.
 
+Windows·웹의 고화질 모드는 선택 자료 `assets/hq/pinball-2x.hqpb`를 사용합니다. 이 파일은 공개 소스에 없으며, 없거나 현재 DAT와 일치하지 않아도 원본 모드로 실행할 수 있습니다. Release의 Windows ZIP에서 pack과 `HQ_NOTICES.md`를 함께 준비할 수 있습니다. [고화질 자료 형식과 pack 생성](HQ.md)을 참고하세요. CMake는 게임·글꼴·음악 폴더와 이 pack만 복사하거나 웹에 포함하며, 제작 중간 자료는 포함하지 않습니다.
+
 ## 도구와 의존성
 
 | 대상 | 사용한 도구·설정 |
@@ -68,6 +70,8 @@ cmake --build build/windows --parallel 2
 ```
 
 출력은 `build/windows/bin/SpaceCadetPinball.exe`입니다. CMake는 SDL DLL 두 개와 `assets/`를 실행 파일 옆으로 복사합니다. 실행할 때는 이 디렉터리 구성을 함께 유지합니다.
+
+PC의 하단 화면 버튼은 표시하지 않습니다. 기본 키는 `Z` 왼쪽 플리퍼, `?` 오른쪽 플리퍼, `Space` 발사, `F2` 새 게임, `F3` 일시정지입니다. `옵션 → 그래픽 → 표시 모드`에서 고화질을 선택하면 모니터 작업 영역에 맞게 창이 커집니다. 모드 전환 뒤에는 직접 게임을 재개합니다.
 
 ```powershell
 & ./build/windows/bin/SpaceCadetPinball.exe

@@ -146,6 +146,80 @@ void mobileGeometryCheck(int width, int height, float scale)
         layout.BoardBounds.x > layout.Buttons[0].x + layout.Buttons[0].w,
         "MOBILE landscape reserves only nudge-row height and uses side margins for flippers");
 }
+void desktopDisplayCheck()
+{
+    for (const auto size : {SDL_Point{600, 416}, SDL_Point{1280, 720}, SDL_Point{1920, 1080}}) {
+        const auto layout = pinball_platform::CalculateLayout(size.x, size.y, 2.625f, false, 24);
+        bool noButtons = true;
+        for (const auto& button : layout.Buttons) noButtons &= button.w == 0 && button.h == 0;
+        check(noButtons && layout.DockHeight == 0 && layout.BoardBounds.x == 0 && layout.BoardBounds.y == 24 &&
+            layout.BoardBounds.w == size.x && layout.BoardBounds.h == size.y - 24,
+            "DISPLAY desktop reserves only menu space and has no screen-button rectangles");
+    }
+    const winmain::WindowBorders borders{8, 32, 8, 8};
+    const auto large = winmain::CalculateWindowedRect(600, 416, 2, 24, SDL_Rect{0, 0, 1920, 1040}, borders);
+    check(large.w == 1200 && large.h == 856, "DISPLAY HQ preferred client uses 2x board plus actual menu height");
+    const auto noMenu = winmain::CalculateWindowedRect(600, 416, 2, 0, SDL_Rect{0, 0, 1920, 1040}, borders);
+    check(noMenu.w == 1200 && noMenu.h == 832, "DISPLAY hidden menu consumes no extra startup height");
+    for (const auto bounds : {SDL_Rect{0, 0, 1366, 728}, SDL_Rect{-1920, -120, 1920, 1040}, SDL_Rect{0, 0, 360, 260}}) {
+        const auto rect = winmain::CalculateWindowedRect(600, 416, 2, 24, bounds, borders);
+        const bool inside = rect.x - borders.Left >= bounds.x && rect.y - borders.Top >= bounds.y &&
+            rect.x + rect.w + borders.Right <= bounds.x + bounds.w && rect.y + rect.h + borders.Bottom <= bounds.y + bounds.h;
+        check(inside && rect.w > 0 && rect.h > 24 && rect.w <= 1200 &&
+            std::abs(double(rect.w) / 600 - double(rect.h - 24) / 416) < .005,
+            "DISPLAY smaller and negative-position monitors fit all borders without distorting board ratio");
+    }
+    const auto invalid = winmain::CalculateWindowedRect(600, 416, 2, 24, SDL_Rect{0, 0, 0, 0}, borders);
+    check(invalid.w == 0 && invalid.h == 0, "DISPLAY invalid usable geometry is rejected");
+
+    options::Options.ShowMenu.V = true; winmain::MainMenuHeight = 24;
+    const auto originalTicks = pb::time_ticks, originalScore = pb::MainTable->CurScore;
+    check(render::ApplyDisplayMode(true) && winmain::single_step, "DISPLAY actual HQ selection pauses and loads existing selected pack");
+    int width = 0, height = 0; SDL_GetWindowSize(winmain::MainWindow, &width, &height);
+    SDL_Rect usable{}; int top = 0, left = 0, bottom = 0, right = 0;
+    SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(winmain::MainWindow), &usable);
+    SDL_GetWindowBordersSize(winmain::MainWindow, &top, &left, &bottom, &right);
+    const auto expected = winmain::CalculateWindowedRect(600, 416, 2, 24, usable, {left, top, right, bottom});
+    check(width == expected.w && height == expected.h && width > 600,
+        "DISPLAY actual windowed HQ selection enlarges client to usable 2x board size");
+    fullscrn::window_size_changed(); const auto layout = pinball_platform::GetControlLayout();
+    check(layout.DockHeight == 0 && pinball_platform::HitControl(width / 2.0f, height - 10.0f) == -1,
+        "DISPLAY removed desktop strip has no hidden input hit target");
+    winmain::ImIO->DisplaySize = ImVec2(static_cast<float>(width), static_cast<float>(height));
+    ImGui_Render_NewFrame(); winmain::ImIO->DeltaTime = 1.0f / 60; ImGui::NewFrame();
+    auto foreground = ImGui::GetForegroundDrawList(); const auto before = foreground->VtxBuffer.Size;
+    pinball_platform::RenderControls();
+    check(foreground->VtxBuffer.Size == before, "DISPLAY desktop foreground draws no screen controls");
+    ImGui::Render(); render::PresentVScreen();
+    check(render::DestinationRect.y >= 24 && render::DestinationRect.y + render::DestinationRect.h <= height &&
+        height - render::DestinationRect.h - 24 <= 2,
+        "DISPLAY HQ game board uses full available client height below menu");
+    check(fullscrn::set_screen_mode(1) == 1 &&
+        (SDL_GetWindowFlags(winmain::MainWindow) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0,
+        "DISPLAY actual HQ fullscreen transition succeeds");
+    int fullscreenWidth, fullscreenHeight;
+    SDL_GetWindowSize(winmain::MainWindow, &fullscreenWidth, &fullscreenHeight);
+    winmain::ResizeHighQualityWindow();
+    int unchangedWidth, unchangedHeight;
+    SDL_GetWindowSize(winmain::MainWindow, &unchangedWidth, &unchangedHeight);
+    check(fullscreenWidth == unchangedWidth && fullscreenHeight == unchangedHeight,
+        "DISPLAY HQ preferred window sizing leaves fullscreen dimensions intact");
+    fullscrn::set_screen_mode(0);
+    SDL_GetWindowSize(winmain::MainWindow, &width, &height);
+    check(!(SDL_GetWindowFlags(winmain::MainWindow) & SDL_WINDOW_FULLSCREEN) &&
+        width == expected.w && height == expected.h,
+        "DISPLAY leaving fullscreen restores the usable HQ preferred window size");
+    check(render::ApplyDisplayMode(false), "DISPLAY original mode remains selectable");
+    int afterWidth, afterHeight; SDL_GetWindowSize(winmain::MainWindow, &afterWidth, &afterHeight);
+    check(afterWidth == width && afterHeight == height && pb::time_ticks == originalTicks && pb::MainTable->CurScore == originalScore,
+        "DISPLAY original selection preserves expanded user window, game score and time");
+    winmain::end_pause();
+    pb::InputDown({InputTypes::Keyboard, SDLK_z}); simulate(8);
+    check(pb::MainTable->FlipperL->FlipperEdge->FlipperFlag == MessageCode::TFlipperExtend,
+        "DISPLAY physical keyboard flipper input remains connected without screen buttons");
+    pinball_platform::CancelInputs();
+    mobileGeometryCheck(390, 844, 1); mobileGeometryCheck(844, 390, 1);
+}
 void mobileActualCheck(int width, int height, const std::string& artifact)
 {
     SDL_SetWindowSize(winmain::MainWindow, width, height);
@@ -255,6 +329,8 @@ void mobileActualCheck(int width, int height, const std::string& artifact)
     winmain::ImIO->DisplaySize = ImVec2(static_cast<float>(height), static_cast<float>(width));
     frame();
 }
+
+
 }
 
 int main(int argc, char** argv)
@@ -262,7 +338,8 @@ int main(int argc, char** argv)
     setvbuf(stdout, nullptr, _IONBF, 0);
     const bool imeOnly = argc == 3 && strcmp(argv[2], "--ime-only") == 0;
     const bool sessionOnly = argc == 3 && strcmp(argv[2], "--session-only") == 0;
-    if ((argc != 2 && !imeOnly && !sessionOnly) || SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS) != 0) return 2;
+    const bool displayOnly = argc == 3 && strcmp(argv[2], "--display-only") == 0;
+    if ((argc != 2 && !imeOnly && !sessionOnly && !displayOnly) || SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS) != 0) return 2;
     const std::string assets = argv[1];
     winmain::MainWindow = SDL_CreateWindow("Runtime checks", 0, 0, 640, 512, SDL_WINDOW_HIDDEN);
     winmain::Renderer = SDL_CreateRenderer(winmain::MainWindow, -1, SDL_RENDERER_SOFTWARE);
@@ -278,7 +355,7 @@ int main(int argc, char** argv)
     pinball_platform::Initialize();
     options::InitPrimary();
     const auto phoneScale = options::UIScaleForDensity(420);
-    if (!imeOnly && !sessionOnly) {
+    if (!imeOnly && !sessionOnly && !displayOnly) {
 #ifdef PINBALL_TEST_ANDROID_UI_DENSITY
     check(options::Options.UIScale.V == 2.625f, "UI scale compiled Android initialization reads SDL logical density");
 #else
@@ -327,6 +404,13 @@ int main(int argc, char** argv)
     pb::reset_table();
     pb::firsttime_setup();
     pb::replay_level(false);
+    if (displayOnly) {
+        desktopDisplayCheck();
+        pinball_platform::CancelInputs(); pb::uninit();
+        ImGui_Render_Shutdown(); ImGui_ImplSDL2_Shutdown(); ImGui::DestroyContext(); winmain::ImIO = nullptr;
+        SDL_free(pref); SDL_DestroyRenderer(winmain::Renderer); SDL_DestroyWindow(winmain::MainWindow); SDL_Quit();
+        printf("SUMMARY display_only=1 failures=%d\n", failures); return failures ? 1 : 0;
+    }
     if (sessionOnly) {
         simulate(1200);
         lifecycleSessionCheck();
@@ -353,21 +437,28 @@ int main(int argc, char** argv)
     simulate(32);
     check(!pb::MainTable->Plunger->PullbackStartedFlag, "CORE-02 resume does not re-press plunger");
 
-    // Independent pointer ids hold both flippers; releasing one preserves the other.
-    controlFinger(SDL_FINGERDOWN, 11, 0);
-    controlFinger(SDL_FINGERDOWN, 12, 1);
+    // Mobile keeps independent touch targets; desktop uses physical controls without a strip.
+    const bool touchControls = pinball_platform::GetControlLayout().Mobile;
+    if (touchControls) {
+        controlFinger(SDL_FINGERDOWN, 11, 0);
+        controlFinger(SDL_FINGERDOWN, 12, 1);
+    } else {
+        pb::InputDown({InputTypes::Keyboard, SDLK_z});
+        pb::InputDown({InputTypes::Keyboard, SDLK_SLASH});
+    }
     check(pb::MainTable->FlipperL->FlipperEdge->FlipperFlag == MessageCode::TFlipperExtend &&
         pb::MainTable->FlipperR->FlipperEdge->FlipperFlag == MessageCode::TFlipperExtend,
-        "INPUT-02 two independent touch flippers");
+        "INPUT-02 two independent platform flipper inputs");
     simulate(8); // Exercise actual extension before expecting a retract transition.
-    controlFinger(SDL_FINGERUP, 11, 0);
+    if (touchControls) controlFinger(SDL_FINGERUP, 11, 0);
+    else pb::InputUp({InputTypes::Keyboard, SDLK_z});
     check(pb::MainTable->FlipperL->FlipperEdge->FlipperFlag == MessageCode::TFlipperRetract &&
         pb::MainTable->FlipperR->FlipperEdge->FlipperFlag == MessageCode::TFlipperExtend,
-        "INPUT-02 one release keeps second pointer held");
+        "INPUT-02 one release keeps second input held");
     platform_cancel_inputs();
     drainHostEvents();
     check(pb::MainTable->FlipperR->FlipperEdge->FlipperFlag == MessageCode::TFlipperRetract,
-        "INPUT-02 host pointer cancel releases remaining touch");
+        "INPUT-02 host cancel releases remaining platform input");
 
     pb::InputDown({InputTypes::Keyboard, SDLK_SPACE});
     SDL_Event lost{};
@@ -443,7 +534,8 @@ int main(int argc, char** argv)
         check(!options::IsControlDialogOpen() && options::Options.Key[~GameBindings::LeftFlipper].Inputs[0] == original,
             "INPUT-02 actual touch Cancel restores bindings and closes modal");
         check(winmain::single_step, "CORE-04 closing control modal preserves paused state");
-        check(foregroundSuppressed && stripRestored, "LAYOUT-01 modal hides strip and closing restores it");
+        check(foregroundSuppressed && (pinball_platform::GetControlLayout().Mobile ? stripRestored : !stripRestored),
+            "LAYOUT-01 modal keeps touch controls mobile-only before and after closing");
         if (options::IsControlDialogOpen()) options::CancelControlDialog();
         winmain::end_pause();
     };
@@ -473,10 +565,10 @@ int main(int argc, char** argv)
 #ifdef PINBALL_TEST_ANDROID_UI_DENSITY
         337 &&
 #else
-        252 &&
+        0 &&
 #endif
         std::abs(stripDraw->_Data->FontSize - 13.0f * phoneScale) < 0.001f,
-        "UI scale actual dock follows its platform layout and uses 13dp labels");
+        "UI scale actual dock is mobile-only and shared font scaling stays intact");
     char boardName[64];
     snprintf(boardName, sizeof boardName, "TTextBox_%p", static_cast<void*>(boardBox));
     auto boardWindow = ImGui::FindWindowByName(boardName);

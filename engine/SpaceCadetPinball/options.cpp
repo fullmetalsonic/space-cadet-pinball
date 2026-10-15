@@ -129,6 +129,7 @@ optionsStruct options::Options
 	{"UI Scale", 1.0f},
 	{"Uniform scaling", true},
 	{"Linear Filtering", true},
+	{"High Quality Mode", false},
 	{"Frames Per Second", DefFps},
 	{"Updates Per Second", DefUps},
 	{"ShowMenu", true},

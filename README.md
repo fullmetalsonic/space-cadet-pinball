@@ -5,19 +5,23 @@ Windows XP의 **3D 핀볼: Space Cadet**을 현대 Windows, 브라우저, Androi
 ## 현재 상태
 
 - Windows 실행형, WebAssembly 브라우저판, Android arm64 APK를 로컬에서 빌드하고 대표 사용자 흐름을 검증했습니다.
+- 이번 Windows·웹 업데이트는 PC 화면의 하단 조작 버튼을 제거하고 게임판 표시 공간을 넓혔습니다. Windows는 키보드로 조작하며, 모바일 화면의 터치 버튼은 유지합니다.
+- Windows·웹에서 `옵션 → 그래픽 → 표시 모드`로 원본과 고화질을 선택할 수 있습니다. 기본값은 원본이며, 전환하면 일시정지되므로 직접 재개하세요. 고화질은 기존 그림을 2배로 처리한 표시 자료이며 게임 규칙·물리·깊이 정보는 바꾸지 않습니다.
 - 세부 기획 v1.2의 유효 완료 조건 **21개 중 20개 PASS**, **소리 최종 확인 1개 부분 완료**입니다. 전체 완료판정은 아직 보류입니다. [검증 범위와 한계](docs/VALIDATION.md)를 참고하세요.
-- 폰 기울기 센서와 관련 옵션은 제거했습니다. **화면 좌·우·앞 흔들기 버튼**과 원래 게임의 Tilt 반칙은 유지합니다.
+- 폰 기울기 센서와 관련 옵션은 제거했습니다. 모바일의 **화면 좌·우·앞 흔들기 버튼**과 원래 게임의 Tilt 반칙은 유지합니다.
 - 최고 점수·이름·설정은 각 기기 또는 브라우저에 저장합니다. 공용 인터넷 순위표와 계정 동기화는 포함하지 않습니다.
 
 ## 바로 플레이 · 다운로드
 
 **[브라우저에서 바로 플레이](https://fullmetalsonic.github.io/space-cadet-pinball/)** — 설치 없이 실행합니다. 최고 점수와 설정은 각 브라우저에 저장됩니다.
 
-[Windows · Web · Android 다운로드](https://github.com/fullmetalsonic/space-cadet-pinball/releases/tag/v0.1.0-preview.1)에서 파일을 받을 수 있습니다.
+[Windows · Web 미리보기 다운로드](https://github.com/fullmetalsonic/space-cadet-pinball/releases/tag/v0.1.1-preview.1)에서 이번 PC·웹 파일을 받을 수 있습니다. Android는 [기존 v0.1.0-preview.1 APK](https://github.com/fullmetalsonic/space-cadet-pinball/releases/tag/v0.1.0-preview.1)를 사용합니다.
 
 - **Windows:** `windows-x64.zip` 전체 압축 해제 후 `SpaceCadetPinball.exe` 실행. DLL과 `assets/`를 함께 유지합니다.
 - **Android:** arm64 APK를 사용합니다. Android 8.0 이상이 필요합니다.
 - **웹:** 위 플레이 링크로 바로 접속하거나 `web.zip`으로 로컬에서 실행합니다. 로컬 실행에는 정적 HTTP 서버가 필요하며, ZIP의 `README-START.txt`에 실행 방법이 있습니다.
+
+Windows 고화질 창은 게임판 1200×832를 기준으로 메뉴·창 테두리와 모니터 작업 영역에 맞춰 열립니다. 새 네온 스타일 시안은 이번 배포에 포함하지 않습니다.
 
 ## 소스에서 빌드할 때
 
@@ -28,6 +32,8 @@ Windows XP의 **3D 핀볼: Space Cadet**을 현대 Windows, 브라우저, Androi
 ```
 
 스크립트는 로컬 자료만 복사하며 원본 실행 파일을 복사하거나 인터넷에서 다운로드하지 않습니다. 이미 존재하는 다른 내용의 파일은 덮어쓰지 않습니다. 자세한 도구와 명령은 [빌드 방법](docs/BUILD.md)에 있습니다.
+
+고화질 자료는 소스 브랜치에 포함하지 않습니다. 선택한 Release의 Windows 패키지에서 `assets/hq/pinball-2x.hqpb`와 관련 고지를 함께 준비할 수 있으며, pack이 없거나 맞지 않으면 원본 모드를 사용합니다. 형식과 제작 범위는 [고화질 자료 안내](docs/HQ.md)를 참고하세요.
 
 ## 구성
 

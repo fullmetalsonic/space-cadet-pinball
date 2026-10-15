@@ -9,6 +9,7 @@
 #include "TTextBox.h"
 #include "fullscrn.h"
 #include "render.h"
+#include "hq_render.h"
 
 ColorRgba gdrv::current_palette[256]{};
 namespace { std::vector<gdrv_bitmap8*> liveBitmaps; }
@@ -86,6 +87,7 @@ gdrv_bitmap8::gdrv_bitmap8(const dat8BitBmpHeader& header)
 
 gdrv_bitmap8::~gdrv_bitmap8()
 {
+	hq_render::ForgetBitmap(this);
 	liveBitmaps.erase(std::remove(liveBitmaps.begin(), liveBitmaps.end(), this), liveBitmaps.end());
 	if (BitmapType != BitmapTypes::None)
 	{
@@ -218,6 +220,7 @@ void gdrv::fill_bitmap(gdrv_bitmap8* bmp, int width, int height, int xOff, int y
 
 void gdrv::fill_bitmap(gdrv_bitmap8* bmp, int width, int height, int xOff, int yOff, ColorRgba fillColor)
 {
+	hq_render::Fill(bmp, width, height, xOff, yOff, fillColor);
 	auto bmpPtr = &bmp->BmpBufPtr1[bmp->Width * yOff + xOff];
 	for (; height > 0; --height)
 	{
@@ -230,6 +233,7 @@ void gdrv::fill_bitmap(gdrv_bitmap8* bmp, int width, int height, int xOff, int y
 void gdrv::copy_bitmap(gdrv_bitmap8* dstBmp, int width, int height, int xOff, int yOff, gdrv_bitmap8* srcBmp,
                        int srcXOff, int srcYOff)
 {
+	hq_render::Copy(dstBmp, width, height, xOff, yOff, srcBmp, srcXOff, srcYOff, false);
 	auto srcPtr = &srcBmp->BmpBufPtr1[srcBmp->Stride * srcYOff + srcXOff];
 	auto dstPtr = &dstBmp->BmpBufPtr1[dstBmp->Stride * yOff + xOff];
 
@@ -244,6 +248,7 @@ void gdrv::copy_bitmap(gdrv_bitmap8* dstBmp, int width, int height, int xOff, in
 void gdrv::copy_bitmap_w_transparency(gdrv_bitmap8* dstBmp, int width, int height, int xOff, int yOff,
                                       gdrv_bitmap8* srcBmp, int srcXOff, int srcYOff)
 {
+	hq_render::Copy(dstBmp, width, height, xOff, yOff, srcBmp, srcXOff, srcYOff, true);
 	auto srcPtr = &srcBmp->BmpBufPtr1[srcBmp->Stride * srcYOff + srcXOff];
 	auto dstPtr = &dstBmp->BmpBufPtr1[dstBmp->Stride * yOff + xOff];
 
@@ -264,6 +269,7 @@ void gdrv::copy_bitmap_w_transparency(gdrv_bitmap8* dstBmp, int width, int heigh
 
 void gdrv::ScrollBitmapHorizontal(gdrv_bitmap8* bmp, int xStart)
 {
+	hq_render::Scroll(bmp, xStart);
 	auto srcPtr = bmp->BmpBufPtr1;
 	auto startOffset = xStart >= 0 ? 0 : -xStart;
 	auto endOffset = xStart >= 0 ? xStart : 0;

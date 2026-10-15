@@ -7,6 +7,7 @@
 #include "GroupData.h"
 #include "pb.h"
 #include "render.h"
+#include "hq_render.h"
 
 
 score_msg_font_type* score::msg_fontp;
@@ -93,6 +94,7 @@ void score::unload_msg_font()
 
 void score::erase(scoreStruct* score, int blitFlag)
 {
+	hq_render::OverlayScope overlay(score);
 	if (score)
 	{
 		if (score->BackgroundBmp)
@@ -125,6 +127,7 @@ void score::update(scoreStruct* score)
 	char scoreBuf[12]{};
 	if (score && score->DirtyFlag && score->Score <= 1000000000)
 	{
+		hq_render::OverlayScope overlay(score);
 		score->DirtyFlag = false;
 		int x = score->Width + score->OffsetX;
 		int y = score->OffsetY;

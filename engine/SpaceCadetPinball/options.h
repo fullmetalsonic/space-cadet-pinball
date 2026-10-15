@@ -269,6 +269,7 @@ struct optionsStruct
 	FloatOption UIScale;
 	BoolOption UniformScaling;
 	BoolOption LinearFiltering;
+	BoolOption HighQuality;
 	IntOption FramesPerSecond;
 	IntOption UpdatesPerSecond;
 	BoolOption ShowMenu;

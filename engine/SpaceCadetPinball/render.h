@@ -53,6 +53,9 @@ public:
 	static void build_occlude_list();
 	static void SpriteViewer(bool* show);
 	static void PresentVScreen();
+	static bool SetHighQuality(bool enabled);
+	static bool ApplyDisplayMode(bool enabled);
+	static void RebuildHighQuality();
 private:
 	static std::vector<render_sprite*> sprite_list, ball_list;
 	static int offset_x, offset_y;

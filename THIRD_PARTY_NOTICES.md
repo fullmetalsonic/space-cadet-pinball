@@ -47,6 +47,15 @@ SDL Android Java의 로컬 수정은 선택적 하드웨어 기능의 권한 확
 
 원본 SoundFont의 GPL-2.0-only와 Debian 패키징 파일에 별도로 기재된 GPL-3+ 표기는 구분합니다. SoundFont의 라이선스는 원본 게임의 음악·효과음에 대한 권리를 부여하지 않습니다.
 
+## 선택 고화질 표시 자료의 제작 도구
+
+Windows·웹 패키지의 선택 자료 `assets/hq/pinball-2x.hqpb`는 원본 게임 그림에서 추출한 표시용 RGB 414개를 처리한 pack입니다. 실사용본은 Real-ESRGAN-ncnn-vulkan의 `realesr-animevideov3` native 2배 처리와 Pillow의 nearest·Lanczos 및 지정 혼합으로 제작했습니다. 모델·실행 도구·제작 중간 자료는 게임 런타임에 포함하지 않습니다.
+
+- Real-ESRGAN-ncnn-vulkan 및 realsr-ncnn-vulkan 기반 부분: MIT. [전체 고지](licenses/Real-ESRGAN-ncnn-vulkan-LICENSE.txt).
+- 상위 Real-ESRGAN: BSD 3-Clause. [전체 고지](licenses/Real-ESRGAN-LICENSE.txt).
+
+원본 게임 자료의 권리는 원저작자에게 남으며, AI 처리나 제작 도구의 라이선스가 원본 자료의 새로운 배포 권한을 부여한다고 주장하지 않습니다. pack의 출처·해시와 적용 범위는 [HQ_NOTICES.md](HQ_NOTICES.md)를 확인하세요.
+
 ## 포함되지 않는 게임 자료
 
 원본 Windows/Full Tilt 게임의 DAT·WAV·MID·BMP 등 외부 게임 자료, 원본 실행 파일과 개인 검증 자료는 공개 소스에 포함하지 않습니다. 사용자는 자신이 사용할 권한을 가진 게임 자료를 로컬에서 준비해야 합니다. 해당 자료를 포함해 생성한 APK·웹 `.data`·실행 패키지의 배포 권한은 공개 소스의 MIT 라이선스로 확보되는 것이 아닙니다.

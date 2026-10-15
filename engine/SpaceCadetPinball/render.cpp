@@ -10,6 +10,8 @@
 #include "winmain.h"
 #include "DebugOverlay.h"
 #include "proj.h"
+#include "hq_render.h"
+#include "pinball_platform.h"
 
 std::vector<render_sprite*> render::sprite_list, render::ball_list;
 zmap_header_type* render::background_zmap;
@@ -120,10 +122,24 @@ void render::init(gdrv_bitmap8* bmp, int width, int height)
 		gdrv::fill_bitmap(vscreen, vscreen->Width, vscreen->Height, 0, 0, 0);
 
 	recreate_screen_texture();
+	// Source identities are registered after palette normalization. Original metadata stays untouched.
+	try
+	{
+		std::vector<hq_render::Binding> bindings;
+		if (pb::record_table) for (auto group : pb::record_table->Groups)
+			for (unsigned resolution = 0; resolution < 3; ++resolution)
+				if (auto bitmap = group->GetBitmap(resolution))
+					bindings.push_back(hq_render::Binding{group->GroupId, resolution, bitmap});
+		hq_render::Initialize(vscreen, zscreen, ball_bitmap, 20, bindings,
+			pb::make_path_name(pb::DatFileName), pb::make_path_name("../hq/pinball-2x.hqpb"));
+		if (options::Options.HighQuality && !hq_render::Enable(true)) options::Options.HighQuality = false;
+	}
+	catch (...) { hq_render::Shutdown(); SDL_Log("PINBALL_HQ HQ renderer initialization failed"); options::Options.HighQuality = false; }
 }
 
 void render::uninit()
 {
+	hq_render::Shutdown();
 	delete vscreen;
 	delete zscreen;
 
@@ -139,7 +155,65 @@ void render::uninit()
 
 void render::recreate_screen_texture()
 {
+	hq_render::RecreateTexture();
 	vscreen->CreateTexture(options::Options.LinearFiltering ? "linear" : "nearest", SDL_TEXTUREACCESS_STREAMING);
+}
+
+bool render::SetHighQuality(bool enabled)
+{
+	if (!hq_render::Enable(enabled)) { options::Options.HighQuality = false; return false; }
+	options::Options.HighQuality = enabled;
+	if (enabled) RebuildHighQuality();
+	if (enabled && !hq_render::Enabled()) { options::Options.HighQuality = false; return false; }
+	return true;
+}
+
+bool render::ApplyDisplayMode(bool enabled)
+{
+	winmain::pause(false);
+	pinball_platform::CancelInputs();
+	const bool applied = SetHighQuality(enabled);
+	if (applied && enabled) winmain::ResizeHighQualityWindow();
+	options::SaveIfChanged();
+	return applied;
+}
+
+void render::RebuildHighQuality()
+{
+	if (!hq_render::Enabled()) return;
+	hq_render::BeginRebuild();
+	// The initial complete background includes the sidebar; the table sprite can cover only the board.
+	if (pb::record_table)
+	{
+		auto group = pb::record_table->record_labeled("background");
+		if (group >= 0) if (auto bitmap = pb::record_table->GetBitmap(group))
+			hq_render::Copy(vscreen, bitmap->Width, bitmap->Height, bitmap->XPosition, bitmap->YPosition,
+				bitmap, 0, 0, false);
+	}
+	for (auto sprite : sprite_list)
+	{
+		rectangle_type clip{};
+		if (sprite->DeleteFlag || !sprite->Bmp || !sprite->ZMap ||
+			!maths::rectangle_clip(sprite->BmpRect, vscreen_rect, &clip)) continue;
+		hq_render::Paint(clip.Width, clip.Height, vscreen, clip.XPosition, clip.YPosition,
+			zscreen, clip.XPosition, clip.YPosition, sprite->Bmp,
+			clip.XPosition - sprite->BmpRect.XPosition, clip.YPosition - sprite->BmpRect.YPosition,
+			sprite->ZMap, clip.XPosition + sprite->ZMapOffestY - sprite->BmpRect.XPosition,
+			clip.YPosition + sprite->ZMapOffestX - sprite->BmpRect.YPosition);
+	}
+	hq_render::ReplayOverlays();
+	// Rebuild the scaled 64x64 logical ball backups without altering their originals or dirty rectangles.
+	for (size_t index = 0; index < ball_list.size() && index < 20; ++index)
+	{
+		auto ball = ball_list[index];
+		const auto& clip = ball->DirtyRect;
+		if (!ball->Bmp || clip.Width <= 0 || clip.Height <= 0) continue;
+		hq_render::Copy(ball_bitmap[index], clip.Width, clip.Height, 0, 0,
+			vscreen, clip.XPosition, clip.YPosition, false);
+		hq_render::PaintFlat(clip.Width, clip.Height, vscreen, clip.XPosition, clip.YPosition,
+			zscreen, clip.XPosition, clip.YPosition, ball->Bmp,
+			clip.XPosition - ball->BmpRect.XPosition, clip.YPosition - ball->BmpRect.YPosition, ball->Depth);
+	}
 }
 
 void render::update()
@@ -454,7 +528,15 @@ void render::SpriteViewer(bool* show)
 
 void render::PresentVScreen()
 {
-	vscreen->BlitToTexture();
+	auto screenTexture = hq_render::UploadTexture();
+	const auto textureScale = screenTexture ? hq_render::Scale() : 1;
+	if (!screenTexture) { vscreen->BlitToTexture(); screenTexture = vscreen->Texture; }
+	if (options::Options.HighQuality && !hq_render::Enabled() && !hq_render::Error().empty())
+	{
+		// Texture/allocation failure must not leave the menu claiming that HQ is active.
+		options::Options.HighQuality = false;
+		options::SaveIfChanged();
+	}
 
 #ifdef PINBALL_AUDIO_DIAGNOSTICS
     // The diagnostic APK records only output changes or stale board-pass state.
@@ -496,7 +578,7 @@ void render::PresentVScreen()
 
 	if (offset_x == 0 && offset_y == 0)
 	{
-		SDL_RenderCopy(winmain::Renderer, vscreen->Texture, nullptr, &DestinationRect);
+		SDL_RenderCopy(winmain::Renderer, screenTexture, nullptr, &DestinationRect);
 	}
 	else
 	{
@@ -505,12 +587,12 @@ void render::PresentVScreen()
 		auto srcBoardRect = SDL_Rect
 		{
 			0, 0,
-			srcSeparationX, vscreen->Height
+			srcSeparationX * textureScale, vscreen->Height * textureScale
 		};
 		auto srcSidebarRect = SDL_Rect
 		{
-			srcSeparationX, 0,
-			vscreen->Width - srcSeparationX, vscreen->Height
+			srcSeparationX * textureScale, 0,
+			(vscreen->Width - srcSeparationX) * textureScale, vscreen->Height * textureScale
 		};
 
 #if SDL_VERSION_ATLEAST(2, 0, 10)
@@ -528,8 +610,8 @@ void render::PresentVScreen()
 			DestinationRect.w - dstSeparationX, static_cast<float>(DestinationRect.h)
 		};
 
-		SDL_RenderCopyF(winmain::Renderer, vscreen->Texture, &srcBoardRect, &dstBoardRect);
-		SDL_RenderCopyF(winmain::Renderer, vscreen->Texture, &srcSidebarRect, &dstSidebarRect);
+		SDL_RenderCopyF(winmain::Renderer, screenTexture, &srcBoardRect, &dstBoardRect);
+		SDL_RenderCopyF(winmain::Renderer, screenTexture, &srcSidebarRect, &dstSidebarRect);
 #else
 		// SDL_RenderCopy cannot express sub pixel offset.
 		// Vscreen shift is required for that.
@@ -552,8 +634,8 @@ void render::PresentVScreen()
 			DestinationRect.w - dstSeparationX, DestinationRect.h
 		};
 
-		SDL_RenderCopy(winmain::Renderer, vscreen->Texture, &srcBoardRect, &dstBoardRect);
-		SDL_RenderCopy(winmain::Renderer, vscreen->Texture, &srcSidebarRect, &dstSidebarRect);
+		SDL_RenderCopy(winmain::Renderer, screenTexture, &srcBoardRect, &dstBoardRect);
+		SDL_RenderCopy(winmain::Renderer, screenTexture, &srcSidebarRect, &dstSidebarRect);
 #endif
 	}
 

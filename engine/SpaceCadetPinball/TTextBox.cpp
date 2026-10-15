@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "pinball_platform.h"
 #include "translations.h"
+#include "hq_render.h"
 
 
 TTextBox::TTextBox(TPinballTable* table, int groupIndex) : TPinballComponent(table, groupIndex, true)
@@ -38,6 +39,7 @@ TTextBox::TTextBox(TPinballTable* table, int groupIndex) : TPinballComponent(tab
 
 TTextBox::~TTextBox()
 {
+	hq_render::ForgetOverlay(this);
 	if (Timer)
 	{
 		if (Timer != -1)
@@ -75,6 +77,7 @@ void TTextBox::TimerExpired(int timerId, void* caller)
 
 void TTextBox::Clear(bool lowPriorityOnly)
 {
+	hq_render::OverlayScope overlay(this);
 	gdrv_bitmap8* bmp = BgBmp;
 	if (bmp)
 		gdrv::copy_bitmap(
@@ -204,6 +207,7 @@ void TTextBox::DrawImGui()
 
 void TTextBox::Draw()
 {
+	hq_render::OverlayScope overlay(this);
 	auto bmp = BgBmp;
 	if (bmp)
 		gdrv::copy_bitmap(
